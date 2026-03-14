@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react"
 
+
 export default function DrawingBoard() {
 const canvasRef = useRef<HTMLCanvasElement | null>(null)
 const toolbarRef = useRef<HTMLDivElement | null>(null)
@@ -10,6 +11,7 @@ useEffect(() => {
 const canvas = canvasRef.current
 const toolbar = toolbarRef.current
 if (!canvas || !toolbar) return
+
 
 
 const ctx = canvas.getContext("2d")
@@ -88,6 +90,7 @@ return () => {
 
   toolbar.removeEventListener("click", toolbarClick)
   toolbar.removeEventListener("change", toolbarChange)
+
 }
 
 
