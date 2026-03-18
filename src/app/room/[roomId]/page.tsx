@@ -17,13 +17,14 @@ export default function RoomPage() {
   useEffect(() => {
     const socket = io("http://localhost:3005");
     socketRef.current = socket;
-
+    
     socket.on("connect", () => {
       console.log("Connected:", socket.id);
       socket.emit("join_room", roomId);
       console.log("Joined room:", roomId);
     });
-
+    
+    
     socket.on("message", (msg) => {
       console.log("Received message:", msg);
     });
@@ -49,7 +50,23 @@ export default function RoomPage() {
     let prevY = 0; 
 
     ctx.lineCap = "round"; 
-
+    
+    socket.on("drawing_history", (history) => {
+      console.log("RECEIVED HISTORY:", history)
+    
+      history.forEach((stroke: any) => {
+    
+        ctx.strokeStyle = stroke.color
+        ctx.lineWidth = stroke.width
+    
+        ctx.beginPath()
+        ctx.moveTo(stroke.prev_x, stroke.prev_y)
+        ctx.lineTo(stroke.x, stroke.y)
+        ctx.stroke()
+    
+      })
+    })
+    
     socket.on("draw", (art) => {
       if (!ctx) return;
 
@@ -139,7 +156,9 @@ export default function RoomPage() {
 
     toolbar.addEventListener("click", toolbarClick);
     toolbar.addEventListener("change", toolbarChange);
-
+    
+    
+    
     return () => {
       canvas.removeEventListener("mousedown", mouseDown);
       canvas.removeEventListener("mouseup", mouseUp);
