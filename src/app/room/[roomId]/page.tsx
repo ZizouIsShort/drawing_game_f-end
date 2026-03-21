@@ -10,6 +10,7 @@ export default function RoomPage() {
 
   const socketRef = useRef<Socket | null>(null);
   const [message, setMessage] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
@@ -17,14 +18,13 @@ export default function RoomPage() {
   useEffect(() => {
     const socket = io("http://localhost:3005");
     socketRef.current = socket;
-    
+
     socket.on("connect", () => {
       console.log("Connected:", socket.id);
       socket.emit("join_room", roomId);
       console.log("Joined room:", roomId);
     });
-    
-    
+
     socket.on("message", (msg) => {
       console.log("Received message:", msg);
     });
@@ -46,30 +46,24 @@ export default function RoomPage() {
     let isPainting = false;
     let lineWidth = 5;
 
-    let prevX = 0; 
-    let prevY = 0; 
+    let prevX = 0;
+    let prevY = 0;
 
-    ctx.lineCap = "round"; 
-    
+    ctx.lineCap = "round";
+
     socket.on("drawing_history", (history) => {
-      console.log("RECEIVED HISTORY:", history)
-    
       history.forEach((stroke: any) => {
-    
-        ctx.strokeStyle = stroke.color
-        ctx.lineWidth = stroke.width
-    
-        ctx.beginPath()
-        ctx.moveTo(stroke.prev_x, stroke.prev_y)
-        ctx.lineTo(stroke.x, stroke.y)
-        ctx.stroke()
-    
-      })
-    })
-    
-    socket.on("draw", (art) => {
-      if (!ctx) return;
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.width;
 
+        ctx.beginPath();
+        ctx.moveTo(stroke.prev_x, stroke.prev_y);
+        ctx.lineTo(stroke.x, stroke.y);
+        ctx.stroke();
+      });
+    });
+
+    socket.on("draw", (art) => {
       ctx.strokeStyle = art.color;
       ctx.lineWidth = art.width;
 
@@ -82,18 +76,16 @@ export default function RoomPage() {
     const draw = (e: MouseEvent) => {
       if (!isPainting) return;
 
-      const x = e.clientX - canvasOffsetX; 
-      const y = e.clientY - canvasOffsetY; 
+      const x = e.clientX - canvasOffsetX;
+      const y = e.clientY - canvasOffsetY;
 
       ctx.lineWidth = lineWidth;
-      ctx.lineCap = "round";
 
-      ctx.beginPath(); 
-      ctx.moveTo(prevX, prevY); 
-      ctx.lineTo(x, y); 
+      ctx.beginPath();
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(x, y);
       ctx.stroke();
 
-      
       const art = {
         prevX,
         prevY,
@@ -108,31 +100,26 @@ export default function RoomPage() {
         art,
       });
 
-      prevX = x; 
-      prevY = y; 
+      prevX = x;
+      prevY = y;
     };
 
     const mouseDown = (e: MouseEvent) => {
       isPainting = true;
-
-      prevX = e.clientX - canvasOffsetX; 
-      prevY = e.clientY - canvasOffsetY; 
+      prevX = e.clientX - canvasOffsetX;
+      prevY = e.clientY - canvasOffsetY;
 
       ctx.beginPath();
-      ctx.moveTo(prevX, prevY); 
+      ctx.moveTo(prevX, prevY);
     };
 
     const mouseUp = () => {
-      if (!isPainting) return;
-
       isPainting = false;
-      ctx.stroke();
       ctx.beginPath();
     };
 
     const toolbarClick = (e: Event) => {
       const target = e.target as HTMLElement;
-
       if (target.id === "clear") {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
@@ -141,13 +128,8 @@ export default function RoomPage() {
     const toolbarChange = (e: Event) => {
       const target = e.target as HTMLInputElement;
 
-      if (target.id === "stroke") {
-        ctx.strokeStyle = target.value;
-      }
-
-      if (target.id === "lineWidth") {
-        lineWidth = Number(target.value);
-      }
+      if (target.id === "stroke") ctx.strokeStyle = target.value;
+      if (target.id === "lineWidth") lineWidth = Number(target.value);
     };
 
     canvas.addEventListener("mousedown", mouseDown);
@@ -156,17 +138,8 @@ export default function RoomPage() {
 
     toolbar.addEventListener("click", toolbarClick);
     toolbar.addEventListener("change", toolbarChange);
-    
-    
-    
+
     return () => {
-      canvas.removeEventListener("mousedown", mouseDown);
-      canvas.removeEventListener("mouseup", mouseUp);
-      canvas.removeEventListener("mousemove", draw);
-
-      toolbar.removeEventListener("click", toolbarClick);
-      toolbar.removeEventListener("change", toolbarChange);
-
       socket.disconnect();
     };
   }, [roomId]);
@@ -184,70 +157,71 @@ export default function RoomPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-zinc-50 dark:bg-black">
-      <section className="h-screen flex text-white overflow-hidden">
-        <div
-          id="toolbar"
-          ref={toolbarRef}
-          className="flex flex-col gap-[6px] p-4 w-48 bg-neutral-900"
-        >
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-[#91EAE4] via-[#86A8E7] to-[#7F7FD5] bg-clip-text text-transparent">
-            Draw.
-          </h1>
+    <div className="flex h-screen bg-black text-white overflow-hidden">
+      
+      {/* LEFT TOOLBAR */}
+      <div
+        ref={toolbarRef}
+        className="flex flex-col gap-2 p-4 w-48 bg-neutral-900"
+      >
+        <h1 className="text-xl font-bold">Draw</h1>
 
-          <label htmlFor="stroke" className="text-[12px]">
-            Stroke
-          </label>
-          <input id="stroke" type="color" className="w-full" />
+        <label>Stroke</label>
+        <input id="stroke" type="color" />
 
-          <label htmlFor="lineWidth" className="text-[12px]">
-            Line Width
-          </label>
-          <input
-            id="lineWidth"
-            type="number"
-            defaultValue={5}
-            className="w-full text-black px-1"
-          />
+        <label>Width</label>
+        <input id="lineWidth" type="number" defaultValue={5} />
 
-          <button
-            id="clear"
-            className="bg-blue-500 rounded-[4px] text-white px-[2px] py-[2px] hover:bg-blue-600"
-          >
-            Clear
-          </button>
-        </div>
+        <button id="clear" className="bg-blue-500 p-1 rounded">
+          Clear
+        </button>
 
-        <div className="flex-1 bg-white">
-          <canvas
-            id="drawing-board"
-            ref={canvasRef}
-            className="w-full h-full"
-          />
-        </div>
-      </section>
-
-      <h1 className="text-xl font-semibold">Room: {roomId}</h1>
-
-      <div className="flex gap-2">
-        <input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type message..."
-          className="border rounded px-3 py-2"
-        />
-
+        {/* TOGGLE BUTTON */}
         <button
-          onClick={sendMessage}
-          className="bg-black text-white px-4 py-2 rounded"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="mt-4 bg-zinc-700 p-2 rounded"
         >
-          Send
+          {isSidebarOpen ? "Close Chat" : "Open Chat"}
         </button>
       </div>
 
-      <p className="text-sm text-zinc-500">
-        Messages will appear in the console
-      </p>
+      {/* CANVAS */}
+      <div className="flex-1 bg-white">
+        <canvas ref={canvasRef} className="w-full h-full" />
+      </div>
+
+      {/* RIGHT SIDEBAR (CHAT) */}
+      <div
+        className={`bg-zinc-900 transition-all duration-300 overflow-hidden ${
+          isSidebarOpen ? "w-80 p-4" : "w-0"
+        }`}
+      >
+        {isSidebarOpen && (
+          <div className="flex flex-col h-full gap-3">
+            <h2 className="text-lg font-semibold">Chat</h2>
+
+            <div className="flex-1 overflow-y-auto text-sm text-zinc-400">
+              Messages are logged in console
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type message..."
+                className="flex-1 px-2 py-1 rounded text-black"
+              />
+
+              <button
+                onClick={sendMessage}
+                className="bg-white text-black px-3 rounded"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
