@@ -3,14 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 
 export default function RoomPage() {
+  const { isLoaded, user } = useUser();
   const params = useParams();
   const roomId = params.roomId as string;
 
   const socketRef = useRef<Socket | null>(null);
   const [message, setMessage] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW
+  const [messages, setMessages] = useState<any[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
@@ -25,8 +28,8 @@ export default function RoomPage() {
       console.log("Joined room:", roomId);
     });
 
-    socket.on("message", (msg) => {
-      console.log("Received message:", msg);
+    socket.on("chat message", (data) => {
+      setMessages((prev) => [...prev, data]);
     });
 
     const canvas = canvasRef.current;
@@ -145,21 +148,26 @@ export default function RoomPage() {
   }, [roomId]);
 
   const sendMessage = () => {
-    if (!socketRef.current) return;
+    if (!socketRef.current || !isLoaded || !user) return;
+
+    setMessages((prev) => [
+      ...prev,
+      { msg: message, user_name: user.firstName },
+    ]);
 
     socketRef.current.emit("chat message", {
       room: roomId,
       msg: message,
+      user_id: user.id,
+      user_name: user.firstName,
     });
 
-    console.log("Sent:", message);
     setMessage("");
   };
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">
       
-      {/* LEFT TOOLBAR */}
       <div
         ref={toolbarRef}
         className="flex flex-col gap-2 p-4 w-48 bg-neutral-900"
@@ -176,7 +184,6 @@ export default function RoomPage() {
           Clear
         </button>
 
-        {/* TOGGLE BUTTON */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="mt-4 bg-zinc-700 p-2 rounded"
@@ -185,12 +192,10 @@ export default function RoomPage() {
         </button>
       </div>
 
-      {/* CANVAS */}
       <div className="flex-1 bg-white">
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
 
-      {/* RIGHT SIDEBAR (CHAT) */}
       <div
         className={`bg-zinc-900 transition-all duration-300 overflow-hidden ${
           isSidebarOpen ? "w-80 p-4" : "w-0"
@@ -200,8 +205,15 @@ export default function RoomPage() {
           <div className="flex flex-col h-full gap-3">
             <h2 className="text-lg font-semibold">Chat</h2>
 
-            <div className="flex-1 overflow-y-auto text-sm text-zinc-400">
-              Messages are logged in console
+            <div className="flex-1 overflow-y-auto text-sm space-y-2">
+              {messages.map((m, i) => (
+                <div key={i}>
+                  <span className="font-semibold text-white">
+                    {m.user_name}:
+                  </span>{" "}
+                  <span className="text-zinc-300">{m.msg}</span>
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-2">

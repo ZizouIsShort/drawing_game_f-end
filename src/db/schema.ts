@@ -30,6 +30,8 @@ export const strokes = pgTable("strokes", {
 
 export const messages = pgTable("messages", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userid: varchar("userid", { length: 255 }).references(() => usersTable.id).notNull(),
+  user_name: varchar("user_name", { length: 255 }).notNull(),
   roomId: text("room_id").notNull(),
   message: varchar("message", { length: 255 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),

@@ -1,5 +1,5 @@
 {
-  "id": "74eeb708-41c7-4b69-9d77-1651d9fe2421",
+  "id": "103a8e1c-3a67-466a-94b4-8671eb0aa217",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -25,6 +25,18 @@
             "cycle": false
           }
         },
+        "userid": {
+          "name": "userid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_name": {
+          "name": "user_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "room_id": {
           "name": "room_id",
           "type": "text",
@@ -46,7 +58,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "messages_userid_users_id_fk": {
+          "name": "messages_userid_users_id_fk",
+          "tableFrom": "messages",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userid"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
