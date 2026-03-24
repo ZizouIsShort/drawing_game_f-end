@@ -25,22 +25,41 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#121212]`}>
         <ClerkProvider>
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <Show when="signed-out">
-              <SignInButton />
-              <SignUpButton>
-                <button className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
+          {/* We make the header absolute so it floats OVER the children (the canvas).
+              pointer-events-none ensures you can click/draw "through" the empty space.
+          */}
+          <header className="absolute top-0 left-0 w-full flex justify-end items-center p-6 gap-4 h-16 z-50 pointer-events-none">
+            <div className="pointer-events-auto">
+              <Show when="signed-out">
+                <div className="flex gap-4">
+                  <SignInButton />
+                  <SignUpButton>
+                    <button className="bg-[#6c47ff] text-white rounded-full font-medium text-sm h-10 px-5 cursor-pointer shadow-lg">
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                </div>
+              </Show>
+              <Show when="signed-in">
+                {/* Adding a subtle glow to the user button to make it pop against the canvas */}
+                <div className="rounded-full border border-white/10 shadow-xl">
+                  <UserButton 
+                    appearance={{
+                      elements: {
+                        userButtonAvatarBox: "w-10 h-10"
+                      }
+                    }}
+                  />
+                </div>
+              </Show>
+            </div>
           </header>
-          {children}
+
+          <main className="h-screen w-screen">
+            {children}
+          </main>
         </ClerkProvider>
       </body>
     </html>

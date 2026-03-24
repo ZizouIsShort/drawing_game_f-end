@@ -75,6 +75,19 @@ export default function RoomPage() {
       ctx.lineTo(art.x, art.y);
       ctx.stroke();
     });
+    
+    // Inside your useEffect in RoomPage.tsx
+    socket.on("clear_canvas", () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+    
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      console.log("Canvas cleared by another user");
+    });
 
     const draw = (e: MouseEvent) => {
       if (!isPainting) return;
@@ -164,170 +177,124 @@ export default function RoomPage() {
 
     setMessage("");
   };
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+  
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+    socketRef.current?.emit("clear_canvas", { room: roomId });
+  };
 
   return (
-    <div className="relative h-screen w-screen bg-[#121212] overflow-hidden font-sans antialiased text-slate-200">
-      {/* --- Floating Dark Glass Toolbar --- */}
-      <div
-        ref={toolbarRef}
-        className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6 px-6 py-3 bg-[#1e1e1e]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all hover:border-white/20"
-      >
-        <div className="flex items-center gap-4 pr-6 border-r border-white/10">
-          <div className="relative group">
-            <input
-              id="stroke"
-              type="color"
-              className="w-8 h-8 rounded-lg border border-white/10 bg-transparent cursor-pointer overflow-hidden transition-transform hover:scale-110"
-            />
+      <div className="relative h-screen w-screen bg-[#121212] overflow-hidden font-sans antialiased text-slate-200">
+        
+        {/* --- Floating Dark Glass Toolbar --- */}
+        <div 
+          ref={toolbarRef}
+          className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6 px-6 py-3 bg-[#1e1e1e]/40 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-all duration-300 hover:bg-[#1e1e1e]/80 hover:scale-105"
+        >
+          <div className="flex items-center gap-4 pr-6 border-r border-white/10">
+            <div className="relative group">
+              <input 
+                id="stroke" 
+                type="color" 
+                className="w-8 h-8 rounded-lg border border-white/10 bg-transparent cursor-pointer overflow-hidden transition-transform hover:scale-110" 
+              />
+            </div>
+            
+            <div className="flex flex-col w-24">
+              <input 
+                id="lineWidth" 
+                type="range" 
+                min="1" 
+                max="20" 
+                defaultValue={5} 
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              />
+            </div>
           </div>
-
-          <div className="flex flex-col w-24">
-            <input
-              id="lineWidth"
-              type="range"
-              min="1"
-              max="20"
-              defaultValue={5}
-              className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            />
+  
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={clearCanvas} 
+              className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+              title="Clear Canvas"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              </svg>
+            </button>
+  
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`p-2 rounded-xl transition-all ${
+                isSidebarOpen ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-slate-400 hover:bg-white/5"
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            id="clear"
-            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
-            title="Clear Canvas"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 6h18" />
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`p-2 rounded-xl transition-all ${
-              isSidebarOpen
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                : "text-slate-400 hover:bg-white/5"
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </button>
+  
+        {/* --- FIXED: Edge-to-Edge Canvas Area --- */}
+        <div className="absolute inset-0 bg-white">
+          <canvas 
+            ref={canvasRef} 
+            className="block w-full h-full touch-none cursor-crosshair" 
+          />
         </div>
-      </div>
-
-      {/* --- Main Canvas Area (Pure White) --- */}
-      <div className="h-full w-full bg-white flex items-center justify-center">
-        <canvas ref={canvasRef} className="block cursor-crosshair" />
-      </div>
-
-      {/* --- Dark Themed Slide-out Chat --- */}
-      <div
-        className={`fixed top-0 right-0 h-full bg-[#18181b]/95 backdrop-blur-2xl border-l border-white/5 shadow-[0_0_40px_rgba(0,0,0,0.7)] transition-all duration-500 ease-in-out z-30 flex flex-col ${
-          isSidebarOpen ? "w-80 translate-x-0" : "w-0 translate-x-full"
-        }`}
-      >
-        {isSidebarOpen && (
-          <div className="flex flex-col h-full w-80">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-                Chat
-              </h2>
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                className="text-slate-500 hover:text-white transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-right-4 duration-300"
-                >
-                  <span className="text-[10px] font-bold text-blue-400/80 ml-1 uppercase tracking-wider">
-                    {m.user_name}
-                  </span>
-                  <div className="bg-white/5 text-slate-200 px-4 py-2.5 rounded-2xl rounded-tl-none text-sm inline-block max-w-[95%] border border-white/5 shadow-inner">
-                    {m.msg}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="p-4 bg-black/20 border-t border-white/5">
-              <div className="relative flex items-center">
-                <input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder="Say something..."
-                  className="w-full pl-4 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-all text-sm text-white placeholder:text-slate-600"
-                />
-                <button
-                  onClick={sendMessage}
-                  className="absolute right-2 p-2 text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m22 2-7 20-4-9-9-4Z" />
-                    <path d="M22 2 11 13" />
-                  </svg>
+  
+        {/* --- Dark Themed Slide-out Chat --- */}
+        <div
+          className={`fixed top-0 right-0 h-full bg-[#18181b]/95 backdrop-blur-2xl border-l border-white/5 shadow-[0_0_40px_rgba(0,0,0,0.7)] transition-all duration-500 ease-in-out z-30 flex flex-col ${
+            isSidebarOpen ? "w-80 translate-x-0" : "w-80 translate-x-full"
+          }`}
+        >
+          {isSidebarOpen && (
+            <div className="flex flex-col h-full w-full">
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Chat</h2>
+                <button onClick={() => setIsSidebarOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
               </div>
+  
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
+                {messages.map((m, i) => (
+                  <div key={i} className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <span className="text-[10px] font-bold text-blue-400/80 ml-1 uppercase tracking-wider">
+                      {m.user_name}
+                    </span>
+                    <div className="bg-white/5 text-slate-200 px-4 py-2.5 rounded-2xl rounded-tl-none text-sm inline-block max-w-[95%] border border-white/5 shadow-inner">
+                      {m.msg}
+                    </div>
+                  </div>
+                ))}
+              </div>
+  
+              <div className="p-4 bg-black/20 border-t border-white/5">
+                <div className="relative flex items-center">
+                  <input
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Say something..."
+                    className="w-full pl-4 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-all text-sm text-white placeholder:text-slate-600"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    className="absolute right-2 p-2 text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
 }
